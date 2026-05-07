@@ -1,0 +1,4 @@
+/Users/houjie/Desktop/final-project-firmware-s26-t15-advanced-coach/wifi_http_otaf_twt_soc/cmake_gcc/build/CMakeFiles/slc.dir
+/Users/houjie/Desktop/final-project-firmware-s26-t15-advanced-coach/wifi_http_otaf_twt_soc/cmake_gcc/build/CMakeFiles/wifi_http_otaf_twt_soc.dir
+/Users/houjie/Desktop/final-project-firmware-s26-t15-advanced-coach/wifi_http_otaf_twt_soc/cmake_gcc/build/CMakeFiles/edit_cache.dir
+/Users/houjie/Desktop/final-project-firmware-s26-t15-advanced-coach/wifi_http_otaf_twt_soc/cmake_gcc/build/CMakeFiles/rebuild_cache.dir
