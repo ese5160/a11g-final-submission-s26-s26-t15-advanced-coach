@@ -6,6 +6,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+# Simple IMU data collection and cropping utility.
+# It receives MQTT IMU data, writes raw CSV, and crops samples for model training.
 # =========================
 # Config
 # =========================
@@ -55,6 +57,7 @@ BUFFER_SIZE = 100
 # =========================
 
 def _as_float(row, key, default=0.0):
+    # Read a numeric field from a row and convert to float.
     try:
         if isinstance(row, dict):
             return float(row[key])
@@ -64,10 +67,12 @@ def _as_float(row, key, default=0.0):
 
 
 def _vec_norm(values):
+    # Compute Euclidean norm of a value vector.
     return math.sqrt(sum(value * value for value in values))
 
 
 def _acc(row, imu_prefix):
+    # Get accelerometer values for a given IMU prefix.
     return [
         _as_float(row, f"{imu_prefix}_ax"),
         _as_float(row, f"{imu_prefix}_ay"),
@@ -76,6 +81,7 @@ def _acc(row, imu_prefix):
 
 
 def _gyro(row, imu_prefix):
+    # Get gyroscope values for a given IMU prefix.
     return [
         _as_float(row, f"{imu_prefix}_gx"),
         _as_float(row, f"{imu_prefix}_gy"),
@@ -84,10 +90,12 @@ def _gyro(row, imu_prefix):
 
 
 def _distance(left, right):
+    # Compute the distance between two vectors.
     return _vec_norm([left[i] - right[i] for i in range(len(left))])
 
 
 def _motion_scores(rows):
+    # Compute a motion score per row using acceleration delta and gyro magnitude.
     scores = []
     for index, row in enumerate(rows):
         gyro_score = max(_vec_norm(_gyro(row, "i0")), _vec_norm(_gyro(row, "i1")))
@@ -106,6 +114,7 @@ def _motion_scores(rows):
 
 
 def _moving_average(values, window=3):
+    # Smooth scores using a simple moving average.
     smoothed = []
     for index in range(len(values)):
         start = max(0, index - window + 1)
@@ -115,6 +124,7 @@ def _moving_average(values, window=3):
 
 
 def _raw_idx(row):
+    # Parse the raw index from a row.
     try:
         return int(float(_as_float(row, "idx")))
     except (TypeError, ValueError):
@@ -122,6 +132,7 @@ def _raw_idx(row):
 
 
 def _normalize_cropped_rows(cropped_rows):
+    # Reset idx and total fields after cropping when normalization is enabled.
     if not NORMALIZE_CROPPED_INDEX:
         return cropped_rows
 
@@ -145,6 +156,7 @@ def _normalize_cropped_rows(cropped_rows):
 
 
 def find_max_energy_region(rows, energy_window_points=ENERGY_WINDOW_POINTS):
+    # Find the window with the highest motion energy in the raw rows.
     if not rows:
         return {
             "scores": [],
@@ -188,6 +200,7 @@ def find_max_energy_region(rows, energy_window_points=ENERGY_WINDOW_POINTS):
 
 
 def crop_rows_to_motion_window(rows, crop_points=CROP_POINTS):
+    # Crop rows around the highest-energy motion window.
     if len(rows) <= crop_points:
         metadata = {
             "algorithm": "max_energy_region",
@@ -238,6 +251,7 @@ def crop_rows_to_motion_window(rows, crop_points=CROP_POINTS):
 
 
 def _series_norm(rows, imu_prefix, sensor_type):
+    # Get magnitude series for a sensor channel (accel or gyro).
     getter = _acc if sensor_type == "acc" else _gyro
     return [_vec_norm(getter(row, imu_prefix)) for row in rows]
 
@@ -314,6 +328,8 @@ def save_crop_debug_images(rows, metadata, output_path, log_dir=CROP_LOG_DIR):
     print(f"[CROP IMG] {overview_path}")
     print(f"[CROP IMG] {signal_path}")
     return [overview_path, signal_path]
+
+# Write cropped rows to a new CSV file and attach debug image paths.
 def write_cropped_rows(rows, output_path, source_path=None):
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -340,6 +356,7 @@ def write_cropped_rows(rows, output_path, source_path=None):
     return metadata
 
 
+# Crop a raw CSV file by reading it and saving the cropped result.
 def crop_csv_file(input_path, output_path=None):
     input_path = Path(input_path)
 
@@ -364,6 +381,7 @@ def crop_csv_file(input_path, output_path=None):
 # =========================
 
 def get_next_sample_path():
+    # Generate the next sample output path using an incrementing index.
     existing_paths = sorted(CROP_DIR.glob("sample_*.csv"))
     max_index = 0
 
@@ -379,6 +397,7 @@ def get_next_sample_path():
 
 
 def open_new_file(total=None):
+    # Start a new CSV file for the next IMU data batch.
     global current_file, current_file_path, csv_writer, batch_rows
 
     if current_file:
@@ -395,6 +414,7 @@ def open_new_file(total=None):
 
 
 def flush_buffer():
+    # Flush buffered rows to the current CSV file.
     global buffer
 
     if buffer and csv_writer:
@@ -407,11 +427,13 @@ def flush_buffer():
 # =========================
 
 def on_connect(client, userdata, flags, rc, properties=None):
+    # Subscribe to the IMU topic when MQTT connects.
     print("[MQTT] Connected")
     client.subscribe(MQTT_TOPIC)
 
 
 def on_message(client, userdata, msg):
+    # Process incoming MQTT IMU messages and save rows.
     global buffer, batch_rows
 
     try:
@@ -487,6 +509,7 @@ def on_message(client, userdata, msg):
 # =========================
 
 def run_collector():
+    # Start the MQTT client and run the message loop.
     import paho.mqtt.client as mqtt
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -497,6 +520,7 @@ def run_collector():
 
 
 def main():
+    # CLI entry point for collecting or cropping IMU data.
     parser = argparse.ArgumentParser(description="Collect IMU CSV data and crop badminton swing windows.")
     parser.add_argument("--crop", metavar="CSV", help="crop an existing raw CSV to fixed points")
     parser.add_argument("--output", metavar="CSV", help="output path for --crop")
