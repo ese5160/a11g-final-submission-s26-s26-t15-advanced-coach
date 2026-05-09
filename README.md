@@ -75,6 +75,8 @@ Link to PCBA:
 
 [https://upenn-eselabs.365.altium.com/designs/92CBF90A-55C1-4A95-9CF9-F91105B3D4B1?activeView=SCH&amp;variant=[No+Variations]&amp;activeDocumentId=Top20Level.SchDoc(1)&amp;location=[1,100.6,0,19.39]#design](https://upenn-eselabs.365.altium.com/designs/92CBF90A-55C1-4A95-9CF9-F91105B3D4B1?activeView=SCH&variant=[No+Variations]&activeDocumentId=Top20Level.SchDoc(1)&location=[1,100.6,0,19.39]#design)
 
+Link to Source Code: https://github.com/ese5160/final-project-firmware-s26-t15-advanced-coach/tree/main/code
+
 ## 3. Hardware & Software Requirements
 
 Summary of Gaps: The two main gaps were that the IMU sampling rate reached 200 Hz instead of the original 1000 Hz target, and the CNN model was not successfully deployed on the MCU after conversion and quantization.
